@@ -1,0 +1,69 @@
+version: '3'
+services:
+
+  db1:
+    container_name: $DB_NAME_1
+    image: mariadb:10.9.2
+    env_file:
+      - ./db1/env/.env
+    volumes:
+      - './db1/data:/var/lib/mysql'
+      - './db1/conf/mysql.cnf:/etc/mysql/conf.d/mysql.cnf'
+    ports:
+      - "3301:3306"
+    networks:
+      db-cool:
+        ipv4_address: 10.100.0.101
+
+  db2:
+    container_name: $DB_NAME_2
+    image: mariadb:10.9.2
+    env_file:
+      - ./db2/env/.env
+    volumes:
+      - './db2/data:/var/lib/mysql'
+      - './db2/conf/mysql.cnf:/etc/mysql/conf.d/mysql.cnf'
+    ports:
+      - "3302:3306"
+    networks:
+      db-cool:
+        ipv4_address: 10.100.0.102
+
+  db3:
+    container_name: $DB_NAME_3
+    image: mariadb:10.9.2
+    env_file:
+      - ./db3/env/.env
+    volumes:
+      - './db3/data:/var/lib/mysql'
+      - './db3/conf/mysql.cnf:/etc/mysql/conf.d/mysql.cnf'
+    ports:
+      - "3303:3306"
+    networks:
+      db-cool:
+        ipv4_address: 10.100.0.103
+
+  maxscale: 
+    container_name: maxscale
+    image: mariadb/maxscale:6.4.2
+    volumes:
+      - './maxscale/conf/maxscale.cnf:/etc/maxscale.cnf'
+    depends_on:
+      - db1
+      - db2
+      - db3
+    ports:
+      - "4006:4006"  # readwrite port
+      - "4008:4008"  # readonly port
+      - "8989:8989"  # REST API port
+    networks:
+      db-cool:
+        ipv4_address: 10.100.0.100
+
+networks:
+  db-cool:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.100.0.0/16
+         gateway: 10.100.0.1

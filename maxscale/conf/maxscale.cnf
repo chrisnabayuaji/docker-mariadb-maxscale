@@ -1,0 +1,94 @@
+########################
+## Server list
+########################
+
+[db1]
+type            = server
+address         = 10.100.0.101
+port            = 3306
+protocol        = MariaDBBackend
+# serv_weight     = 1
+
+[db2]
+type            = server
+address         = 10.100.0.102
+port            = 3306
+protocol        = MariaDBBackend
+# serv_weight     = 1
+
+[db3]
+type            = server
+address         = 10.100.0.103
+port            = 3306
+protocol        = MariaDBBackend
+# serv_weight     = 1
+
+#########################
+## MaxScale configuration
+#########################
+
+[maxscale]
+threads                 = auto
+log_augmentation        = 1
+ms_timestamp            = 1
+syslog                  = 1
+
+#########################
+# Monitor for the servers
+#########################
+
+[monitor]
+type                    = monitor
+module                  = mariadbmon
+servers                 = db1,db2,db3
+user                    = maxuser
+password                = maxpwd
+auto_failover           = true
+auto_rejoin             = true
+enforce_read_only_slaves = 1
+
+#########################
+## Service definitions for read/write splitting and read-only services.
+#########################
+
+[rw-service]
+type                        = service
+router                      = readwritesplit
+servers                     = db1,db2,db3
+user                        = maxuser
+password                    = maxpwd
+max_slave_connections       = 255
+max_sescmd_history          = 1500
+causal_reads                = true
+causal_reads_timeout        = 10
+transaction_replay          = true
+transaction_replay_max_size = 1Mi
+delayed_retry               = true
+master_reconnection         = true
+master_failure_mode         = fail_on_write
+max_slave_replication_lag   = 3
+
+[rr-service]
+type            = service
+router          = readconnroute
+servers         = db1,db2,db3
+router_options  = master
+user            = maxuser
+password        = maxpwd
+
+##########################
+## Listener definitions for the service
+## Listeners represent the ports the service will listen on.
+##########################
+
+[rw-listener]
+type            = listener
+service         = rw-service
+protocol        = MariaDBClient
+port            = 4008
+
+[ro-listener]
+type            = listener
+service         = rr-service
+protocol        = MariaDBClient
+port            = 4006

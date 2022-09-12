@@ -1,0 +1,9 @@
+[mysqld]
+innodb_strict_mode = 0
+innodb_file_per_table = 1
+innodb_file_format = Barracuda
+innodb_log_file_size = 256M
+
+bind-address = 10.100.0.103
+server-id = 3
+log_bin = /var/log/mysql/mysql-bin.log
